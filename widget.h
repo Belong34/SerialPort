@@ -23,7 +23,8 @@ public:
     ~Widget();
 
 public:
-    static float x,y;
+    static float x,y,v;
+    static int sendFlag;
 
 private slots:
     void Read_Date();       //读取串口数据
@@ -37,8 +38,6 @@ private slots:
     void on_clear_button2_clicked();
     void on_receive_modl_clicked();
     void on_send_modl_clicked();
-
-    void on_pushButton_clicked();
 
     void on_pushButton_2_clicked();
 

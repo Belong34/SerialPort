@@ -11,7 +11,13 @@
 #include<qmath.h>
 #include <widget.h>
 int timeId;
-
+int timegap=1000;
+int xmax =0;
+int xmin =0;
+int ymax =0;
+int ymin =0;
+int max=0;
+int min=0;
 chart2::chart2(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::chart2)
@@ -47,14 +53,24 @@ chart2::chart2(QWidget *parent) :
     m_chart->legend()->setVisible(true);  //设置图例可见
   //生成一小段数据列表用作绘图初始数据
     QList<QPointF> mydata1;
-       mydata1.append(QPointF(0, 0));
+       mydata1.append(QPointF(0,0));
     addSeries(mydata1); //增加一条曲线，数据集为mydata1
-   connectMarkers();  //将曲线与图例连接起来，可以勾选进行显示与隐藏
+    QList<QPointF> mydata2;
+       mydata2.append(QPointF(0,0));
+    addSeries(mydata2); //增加一条曲线，数据集为mydata1
+    QList<QPointF> mydata3;
 
+    mydata3.append(QPointF(0,0));
+    addSeries(mydata3);
+
+   connectMarkers();  //将曲线与图例连接起来，可以勾选进行显示与隐藏
     m_chart->setAxisX(axisX, m_serieslist.first());  //将x和y坐标轴与第一条曲线连接
     m_chart->setAxisY(axisY, m_serieslist.first());
-    timeId = startTimer(1000);    //qobject中的函数，设置定时器时间间隔
-
+    m_chart->setAxisX(axisX, m_serieslist[1]);  //将x和y坐标轴与第一条曲线连接
+    m_chart->setAxisY(axisY, m_serieslist[1]);
+    m_chart->setAxisX(axisX, m_serieslist[2]);  //将x和y坐标轴与第一条曲线连接
+    m_chart->setAxisY(axisY, m_serieslist[2]);
+    timeId = startTimer(timegap);    //qobject中的函数，设置定时器时间间隔
 }
 QList<QPointF> chart2::data;
 int chart2::data_n;
@@ -171,8 +187,9 @@ QList<QPointF> chart2::setdata()  //设置图表数据的函数接口
 
 void chart2::timerEvent(QTimerEvent *event)    //定时器事件的重构
 {
-    if (event->timerId() == timeId)//定时器时间到，模拟数据填充
+    if (Widget::sendFlag==1)//定时器时间到，模拟数据填充
     {
+        Widget::sendFlag==0;
         static QTime dataTime(QTime::currentTime());
         long int eltime = dataTime.elapsed();  //经过的时间
         static int lastpointtime = 1;
@@ -180,20 +197,85 @@ void chart2::timerEvent(QTimerEvent *event)    //定时器事件的重构
         if (isVisible())
         {
             this->data.append(QPointF(Widget::x,Widget::y));
-            qDebug() << this->data;//输出信
+            qDebug() << this->data;//输出信息
+            /*******************写数据报表*******************/
             QFile file("data.txt");
             file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append );
             QTextStream out(&file);
-            out <<  QString("%3").arg(Widget::x).toUtf8()<< "   " << QString("%1").arg(Widget::y).toUtf8()<<endl;
+            out <<QString("%3").arg(Widget::x).toUtf8()<< " " << QString("%3").arg(Widget::y).toUtf8()<<" "<<QString("%3").arg(Widget::v).toUtf8()<<endl;
             file.close();
+            /**********************************************/
             this->data_n++;
             QVector<QPointF>olddata=m_serieslist.first()->pointsVector();
-            olddata.append(QPointF(Widget::x,Widget::y));
-           // olddata.append(QPointF(lastpointtime +olddata.count(), lastpointtime*0.3));//填充数据
-                                                                                       //这里添加传入来的数据即可
-            axisX->setRange(0, lastpointtime + m_serieslist.first()->count());//设置x坐标轴
+            olddata.append(QPointF(lastpointtime,Widget::y));
+            QVector<QPointF>olddata2=m_serieslist[1]->pointsVector();
+            olddata2.append(QPointF(lastpointtime,Widget::x));
+            QVector<QPointF>olddata3=m_serieslist[2]->pointsVector();
+            olddata3.append(QPointF(Widget::x,Widget::y));
+            // olddata.append(QPointF(lastpointtime +olddata.count(), lastpointtime*0.3));//填充数据
+                                                                                       //这里添加传入来的数据即
+//            axisX->setRange(0, lastpointtime + m_serieslist.first()->count());//设置x坐标轴
+            axisX->setRange(0, lastpointtime );//设置x坐标轴
+            if(m_serieslist.first()->isVisible()&&m_serieslist[1]->isVisible()){
+                if(Widget::y>ymax){
+                    ymax=Widget::y;
+                }
+                if(Widget::y<ymin){
+                    ymin=Widget::y;
+               }
+                if(Widget::x>xmax){
+                    xmax=Widget::x;
+               }
+                if(Widget::x<xmin){
+                    xmin=Widget::x;
+                }
+                if(ymax>xmax)
+                    if(ymax>max){
+                        max=ymax;
+                        axisY->setRange(min-min*0.1, max+max*0.1 );}//设置x坐标轴
+                else
+                    if(xmax>max){
+                        max=xmax;
+                        axisY->setRange(min-min*0.1, max+max*0.1 );}//设置x坐标轴
+
+            }
+            else if(m_serieslist.first()->isVisible()){
+                if(Widget::y>ymax){
+                    ymax=Widget::y;
+                    if(ymax>max)
+                        max=xmax;
+                    axisY->setRange(ymin-ymin*0.1, ymax+ymax*0.1 );//设置x坐标轴
+                }
+                if(Widget::y<ymin){
+                    ymin=Widget::y;
+                    if(ymin<min)
+                        min=xmin;
+                    axisY->setRange(ymin-ymin*0.1, ymax+ymax*0.1 );//设置x坐标轴
+                }
+            }
+            else if(m_serieslist[1]->isVisible()){
+                axisY->setRange(xmin-xmin*0.1, xmax+xmax*0.1 );//设置x坐标轴
+                if(Widget::x>xmax){
+                    xmax=Widget::x;
+                    if(xmax>max)
+                        max=xmax;
+                    axisY->setRange(xmin-xmin*0.1, xmax+xmax*0.1 );//设置x坐标轴
+                }
+                if(Widget::x<xmin){
+                    xmin=Widget::x;
+                    if(xmin<min)
+                        min=xmin;
+                    axisY->setRange(xmin-xmin*0.1, xmax+xmax*0.1 );//设置x坐标轴
+                }
+            }
+            else if(m_serieslist[2]->isVisible()){
+                axisY->setRange(-10000, 10000 );
+                axisX->setRange(-10000, 10000 );
+            }
             //后期需更改为一开始固定，只有当数据个数超出坐标轴范围时坐标轴开始扩展。
             m_serieslist.first()->replace(olddata);
+            m_serieslist[1]->replace(olddata2);
+            m_serieslist[2]->replace(olddata3);
             lastpointtime++;
         }
     }
@@ -278,3 +360,11 @@ void chart2::on_pushButton_2_clicked()
     }
     addSeries(data);
 }
+
+void chart2::on_spinBox_valueChanged(int arg1)
+{
+    timegap=arg1;
+    killTimer(timeId);
+    timeId = startTimer(timegap);
+}
+

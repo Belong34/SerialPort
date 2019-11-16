@@ -23,6 +23,8 @@ Widget::~Widget()
 }
 float Widget::x=0;
 float Widget::y=0;
+float Widget::v=0;
+int Widget::sendFlag=0;
 //发送数据
 void Widget::on_send_button_clicked()
 {
@@ -110,10 +112,12 @@ void Widget::Read_Date()
         {
             QString str = ui->Receive_text_window->toPlainText();
             str+=tr(buf);//函数 tr()全名是QObject::tr(),被它处理的 字符串可以 使用工具提 取出来翻译 成其他语言, 也就是做国际化使用
-            qDebug()<<buf.split(':').size()<<endl;
-            if(buf.split(':').size()==5){
+//            qDebug()<<buf.split(':').size()<<endl;
+            if(buf.split(':').size()==6){
             Widget::x=buf.split(':').at(1).toFloat();
             Widget::y=buf.split(':').at(3).toFloat();
+            Widget::v=buf.split(':').at(5).toFloat();
+            Widget::sendFlag=1;
             }
             QDateTime curDateTime=QDateTime::currentDateTime();
             QString str1 = curDateTime.toString("    yyyy-MM-dd hh:mm:ss"); //设置显示格式
@@ -147,6 +151,12 @@ void Widget::find_port()
         serial.setPort(info);   //设置串口
         if(serial.open(QIODevice::ReadWrite))
         {
+            for(int i=0;i++;i<ui->com->maxCount()){
+                if(serial.portName()==ui->com->currentData()){
+                    serial.close();
+                    return;
+                }
+            }
             ui->com->addItem(serial.portName());        //显示串口name
             serial.close();
         }
@@ -202,12 +212,6 @@ void Widget::on_send_modl_clicked()
     }
 }
 
-
-void Widget::on_pushButton_clicked()
-{
-    chart=new Charts();
-    chart->show();
-}
 
 void Widget::on_pushButton_2_clicked()
 {
