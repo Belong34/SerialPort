@@ -1,7 +1,8 @@
 #include "widget.h"
 #include "ui_widget.h"
 #include <QMessageBox>
-
+#include <time.h>
+#pragma execution_character_set("utf-8")
 Widget::Widget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Widget)
@@ -24,7 +25,11 @@ Widget::~Widget()
 float Widget::x=0;
 float Widget::y=0;
 float Widget::v=0;
+int Widget::staus=1;
 int Widget::sendFlag=0;
+int timing;
+char *data1;
+QString  gap;
 //发送数据
 void Widget::on_send_button_clicked()
 {
@@ -52,6 +57,7 @@ void Widget::on_open_port_clicked()
    sleep(100);      //延时100ms
    find_port();     //重新查找com
     //初始化串口
+   data1="ss";
         serialport->setPortName(ui->com->currentText());        //设置串口名
         if(serialport->open(QIODevice::ReadWrite))              //打开串口成功
         {
@@ -105,9 +111,16 @@ void Widget::Read_Date()
 {
     QByteArray buf;
     buf = serialport->readAll();
+    printf(buf.data());
+    if(strcmp(buf.data(),data1)!=0){
+        gap=QString::number(clock()-timing);
+        ui->label_8->setText(gap);
+        timing=clock();
+    }
+
+    data1=buf.data();
     if(!buf.isEmpty())          //将数据显示到文本串口
     {
-
         if(textstate_receive == true)   //文本模式
         {
             QString str = ui->Receive_text_window->toPlainText();
@@ -118,6 +131,11 @@ void Widget::Read_Date()
             Widget::y=buf.split(':').at(3).toFloat();
             Widget::v=buf.split(':').at(5).toFloat();
             Widget::sendFlag=1;
+            }
+            else if (buf.split(':').size()==3){
+                Widget::x=buf.split(':').at(1).toFloat();
+                qDebug()<<Widget::x;
+                Widget::sendFlag=1;
             }
             QDateTime curDateTime=QDateTime::currentDateTime();
             QString str1 = curDateTime.toString("    yyyy-MM-dd hh:mm:ss"); //设置显示格式
@@ -145,6 +163,8 @@ void Widget::Read_Date()
 void Widget::find_port()
 {
     //查找可用的串口
+//    qDebug()<<ui->com->count()<<endl;
+    ui->com->clear();
     foreach(const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
     {
         QSerialPort serial;
@@ -229,4 +249,18 @@ void Widget::on_pushButton_3_clicked()
 void Widget::on_send_text_window_textChanged()
 {
 
+}
+
+void Widget::on_pushButton_clicked()
+{
+    if (Widget::staus==0){
+        ui->pushButton->setText("轨迹模式");
+        qDebug()<<Widget::staus<<endl;
+        Widget::staus=1;
+    }
+    else{
+        ui->pushButton->setText("标定模式");
+        qDebug()<<Widget::staus<<endl;
+        Widget::staus=0;
+    }
 }

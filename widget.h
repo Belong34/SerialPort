@@ -25,6 +25,7 @@ public:
 public:
     static float x,y,v;
     static int sendFlag;
+    static int staus;
 
 private slots:
     void Read_Date();       //读取串口数据
@@ -44,6 +45,8 @@ private slots:
     void on_pushButton_3_clicked();
 
     void on_send_text_window_textChanged();
+
+    void on_pushButton_clicked();
 
 private:
     Ui::Widget *ui;

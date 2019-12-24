@@ -33,6 +33,7 @@ public:
 
 public:
     static QList<QPointF> data;
+    static QList<float> data_for_biaoding;
     static int data_n;
 
 public slots:
@@ -52,6 +53,8 @@ private slots:
     void on_pushButton_2_clicked();
 
     void on_spinBox_valueChanged(int arg1);
+
+    void on_pushButton_clicked();
 
 private:
     Ui::chart2 *ui;
